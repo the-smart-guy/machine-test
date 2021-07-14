@@ -3,7 +3,7 @@ NOTE : Minimum .Net SDK ver 5.0.202 required
 
 Step 1 : Connect to your SQL server on SQL Server Management Studio
 
-Step 2 : Create a New Database. Preferrably named 'DigitalAvenue'
+Step 2 : Create a New Database.
 
 Step 3 : Run the queries of DigitalAvenue.sql on the newly created Database
 
