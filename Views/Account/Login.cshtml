@@ -1,0 +1,49 @@
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Authentication
+@model LoginViewModel
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+
+    ViewData["Title"] = "Log in";
+}
+
+<div align="center" class="mt-5">
+    <h5>Log in to your account</h5>
+    <div style="text-align: left; max-width: 300px;" class="my-3">
+        <form asp-controller="Account" asp-action="Login" method="post">
+            <div class="border rounded-2 shadow-sm px-3 pb-3">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <input asp-for="Email" class="form-control" placeholder="Enter Your Email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input asp-for="Password" class="form-control" placeholder="Enter Your Password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <div class="checkbox">
+                        <label asp-for="RememberMe">
+                            <input asp-for="RememberMe" />
+                            @Html.DisplayNameFor(m => m.RememberMe)
+                        </label>
+                    </div>
+                </div>
+                <div align="right">
+                    <button type="submit" class="btn btn-primary">Log in</button>
+                </div>                
+            </div>
+        </form>
+    </div>
+    <p>
+        <a asp-controller="Account" asp-action="Register" class="text-decoration-none">Not Registered yet? Click here.</a>
+    </p>
+</div>
+
+@section Scripts {
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

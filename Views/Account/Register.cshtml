@@ -1,0 +1,41 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div align="center" class="mt-5">
+    <h5>Create a new account</h5>
+    <div style="text-align: left; max-width: 400px;" class="my-3">
+        <form asp-controller="Account" asp-action="Register" method="post">
+            <div class="border rounded-2 shadow-sm px-3 pb-3">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <input asp-for="Email" class="form-control" placeholder="Enter Your Email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input asp-for="Password" class="form-control" placeholder="Enter a strong Password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm above Password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div align="right">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>                
+            </div>
+        </form>
+    </div>
+    <p>
+        <a asp-controller="Account" asp-action="Login" class="text-decoration-none">Already Registered? Click here.</a>
+    </p>
+</div>
+
+@section Scripts {
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

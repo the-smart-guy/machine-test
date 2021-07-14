@@ -1,0 +1,214 @@
+@model Sale
+@{
+    ViewData["Title"] = "Sale Report";
+}
+
+<input id="Page" value="1" type="hidden">
+<input id="PageSize" value="20" type="hidden">
+<input id="EndReached" value="false" type="hidden">
+<input id="IsLoading" value="false" type="hidden">
+
+<div>
+    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='currentColor'/%3E%3C/svg%3E&#34;);"
+        aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Sales</li>
+        </ol>
+    </nav>
+</div>
+
+<div>
+    <h1 class="display-6">Sales Report</h1>
+</div>
+
+<div class="accordion mb-3 shadow-sm">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#filters">
+                Filter Results
+            </button>
+        </h2>
+        <div id="filters" class="accordion-collapse collapse">
+            <div class="accordion-body">
+                <div class="mb-3 row">
+                    <div class="col-sm-3">
+                        <label class="form-label form-label-sm">Date From</label>
+                        <input id="DateFrom" type="text" class="form-control form-control-sm date-picker" readonly
+                            autocomplete="off">
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label">Date To</label>
+                        <input id="DateTo" type="text" class="form-control form-control-sm date-picker" readonly
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="col-sm-3">
+                        <label class="form-label">Country</label>
+                        <select id="CountryCode" class="form-control form-control-sm">
+                            <option value="">-- All Countries --</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label">Region/State</label>
+                        <select id="RegionCode" class="form-control form-control-sm">
+                            <option value="">-- All Regions/States --</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label">City</label>
+                        <select id="CityCode" class="form-control form-control-sm">
+                            <option value="">-- All Cities --</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="SearchBtn" class="btn btn-block btn-primary">Search</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="SearchDiv" class="shadow shadow-sm border table-responsive rounded-2">
+    <table class="table table-hover mb-0">
+        <thead class="bg-dark text-light">
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Country</th>
+                <th>State/Region</th>
+                <th>City</th>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="SearchRows"></tbody>
+    </table>
+</div>
+
+@section scripts
+{
+<link href="~/lib/jquery-ui/jquery-ui.min.css" rel="stylesheet" asp-append-version="true" />
+<script src="~/lib/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
+
+<script>
+    $(window).bind('scroll', function () {
+        if ($(window).scrollTop() >= $('#SearchDiv').offset().top + $('#SearchDiv').outerHeight() - window.innerHeight) {
+            $endReached = $('#EndReached').val();
+            if ($endReached == "true") return;
+
+            $isLoading = $('#IsLoading').val();
+            if ($isLoading == "true") return;
+
+            $('#IsLoading').val("true");
+
+            $page = $('#Page').val();
+            $('#Page').val(Number($page) + 1);
+
+            searchSales(false);
+        }
+    });
+
+    $(document).ready(function () {
+        $(function () { $(".date-picker").datepicker({ changeMonth: true, changeYear: true, yearRange: "-100:+0", dateFormat: 'dd-mm-yy', regional: "en-GB", }); });
+
+        searchSales();
+
+        $.ajax({
+            url: '/Master/Countries',
+            method: "GET",
+            success: function (data) {
+                $("#CountryCode").html("<option value=''>-- All Countries --</option>");
+                $.each(data, function (index, country) {
+                    $("#CountryCode").append("<option value='" + country.countryCode + "'>" + country.countryName + "</option>");
+                });
+            }
+        });
+
+        $("#CountryCode").change(function () {
+            $countryCode = $('#CountryCode').val();
+            if ($countryCode == "") {
+                $("#RegionCode").html("<option value=''>-- All Regions/States --</option>");
+                $("#CityCode").html("<option value=''>-- All Cities --</option>");
+            } else {
+                $("#RegionCode").html("Loading...");
+                $.ajax({
+                    url: '/Master/Regions',
+                    data: 'countryCode=' + $countryCode,
+                    method: "GET",
+                    success: function (data) {
+                        $("#RegionCode").html("<option value=''>-- All Regions/States --</option>");
+                        $.each(data, function (index, region) {
+                            $("#RegionCode").append("<option value='" + region.regionCode + "'>" + region.regionName + "</option>");
+                        });
+                    }
+                });
+            }
+        });
+
+        $("#RegionCode").change(function () {
+            $regionCode = $('#RegionCode').val();
+            if ($regionCode == "") {
+                $("#CityCode").html("<option value=''>-- All Cities --</option>");
+            } else {
+                $("#CityCode").html("Loading...");
+                $.ajax({
+                    url: '/Master/Cities',
+                    data: 'regionCode=' + $regionCode,
+                    method: "GET",
+                    success: function (data) {
+                        $("#CityCode").html("<option value=''>-- All Cities --</option>");
+                        $.each(data, function (index, city) {
+                            $("#CityCode").append("<option value='" + city.cityCode + "'>" + city.cityName + "</option>");
+                        });
+                    }
+                });
+            }
+        });
+
+        $("#SearchBtn").click(function () {
+            $('#Page').val("1");
+            $('#PageSize').val("20");
+            $('#EndReached').val("false");
+            $('#IsLoading').val("true");
+            searchSales(true);
+        });
+    });
+
+    function searchSales(refreshTable) {
+        $endReached = $('#EndReached').val();
+        if ($endReached == "true") return;
+
+        $dateFrom = $('#DateFrom').val();
+        $dateTo = $('#DateTo').val();
+        $countryCode = $('#CountryCode').val();
+        $regionCode = $('#RegionCode').val();
+        $cityCode = $('#CityCode').val();
+        $page = $('#Page').val();
+        $pageSize = $('#PageSize').val();
+
+        $.ajax({
+            url: '/Sales/Search',
+            data: 'dateFrom=' + $dateFrom + '&dateTo=' + $dateTo + '&countryCode=' + $countryCode + '&regionCode=' + $regionCode + '&cityCode=' + $cityCode + '&page=' + $page + '&pageSize=' + $pageSize,
+            method: "GET",
+            success: function (data) {
+                if (refreshTable) {
+                    $("#SearchRows").html("");
+                }
+                $.each(data.items, function (index, saleItem) {
+                    $("#SearchRows").append('<tr><td>' + saleItem.saleId + '</td><td>' + saleItem.customerName + '</td><td>' + saleItem.countryName + '</td><td>' + saleItem.regionName + '</td><td>' + saleItem.cityName + '</td><td>' + saleItem.productName + '</td><td>' + saleItem.price + '</td><td>' + saleItem.quantity + '</td><td>' + saleItem.total + '</td><td><a href="/sales/editor/' + saleItem.saleId + '">Edit</a></td></tr>');
+                });
+                if (data.items.length < Number($pageSize)) {
+                    $("#EndReached").val("true");
+                }
+                $('#IsLoading').val("false");
+            }
+        });
+    }
+</script>
+}
